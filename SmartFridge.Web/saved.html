@@ -1,60 +1,63 @@
-﻿<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Мои рецепты</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .recipe-card { border-left: 5px solid #0d6efd; }
-    </style>
-</head>
-<body class="bg-light">
-    <div class="container py-5">
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="display-5">📖 Сохраненные рецепты</h1>
-            <a href="index.html" class="btn btn-outline-secondary shadow-sm">← К холодильнику</a>
-        </div>
-        
-        <div id="savedRecipesList" class="row">
-            </div>
-    </div>
+﻿<script>
+    // Твой новый адрес на Render
+    const API_BASE = "https://smartfridge-229t.onrender.com/api/Fridge";
 
-    <script>
-        async function loadSavedRecipes() {
-            try {
-                const response = await fetch("http://localhost:5053/api/Fridge/saved");
-                const recipes = await response.json();
-                const listDiv = document.getElementById('savedRecipesList');
-                
-                if (recipes.length === 0) {
-                    listDiv.innerHTML = '<div class="col text-center mt-5"><h5>Тут пока пусто. Время что-то приготовить! 🍳</h5></div>';
-                    return;
-                }
+    async function loadSavedRecipes() {
+        try {
+            // Исправлено: теперь запрос идет на Render, а не на localhost
+            const response = await fetch(`${API_BASE}/saved`);
+            
+            if (!response.ok) throw new Error("Ошибка загрузки");
+            
+            const recipes = await response.json();
+            const listDiv = document.getElementById('savedRecipesList');
+            
+            if (!recipes || recipes.length === 0) {
+                listDiv.innerHTML = '<div class="col text-center mt-5"><h5>Тут пока пусто. Время что-то приготовить! 🍳</h5></div>';
+                return;
+            }
 
-                listDiv.innerHTML = recipes.map(r => `
-                    <div class="col-md-6 col-lg-4 mb-4" id="recipe-${r.id}">
-                        <div class="card shadow-sm h-100 p-3 recipe-card">
-                            <h5 class="text-primary">${r.title}</h5>
-                            <p class="text-muted small">${r.description}</p>
-                            <div class="d-flex justify-content-between align-items-center mt-auto border-top pt-2">
-                                <span class="badge bg-light text-dark">${new Date(r.savedAt).toLocaleDateString()}</span>
-                                <button class="btn btn-sm btn-link text-danger" onclick="deleteRecipe(${r.id})">Удалить</button>
-                            </div>
+            listDiv.innerHTML = recipes.map(r => `
+                <div class="col-md-6 col-lg-4 mb-4" id="recipe-${r.id}">
+                    <div class="card shadow-sm h-100 p-3 recipe-card">
+                        <h5 class="text-primary">${r.title}</h5>
+                        <p class="text-muted small">${r.description}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-auto border-top pt-2">
+                            <span class="badge bg-light text-dark">
+                                ${r.savedAt ? new Date(r.savedAt).toLocaleDateString() : 'Недавно'}
+                            </span>
+                            <button class="btn btn-sm btn-link text-danger" onclick="deleteRecipe(${r.id})">Удалить</button>
                         </div>
                     </div>
-                `).join('');
-            } catch (e) {
-                console.error(e);
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error("Критическая ошибка:", e);
+            document.getElementById('savedRecipesList').innerHTML = 
+                '<div class="col text-center mt-5 text-danger"><h5>Не удалось загрузить рецепты. Проверь VPN!</h5></div>';
+        }
+    }
+
+    async function deleteRecipe(id) {
+        if (!confirm("Удалить этот рецепт из книги?")) return;
+        
+        try {
+            const response = await fetch(`${API_BASE}/saved/${id}`, { 
+                method: "DELETE" 
+            });
+            
+            if (response.ok) {
+                const element = document.getElementById(`recipe-${id}`);
+                element.style.opacity = '0';
+                setTimeout(() => element.remove(), 300);
+            } else {
+                alert("Не удалось удалить рецепт на сервере.");
             }
+        } catch (e) {
+            alert("Ошибка связи с сервером.");
         }
+    }
 
-        async function deleteRecipe(id) {
-            if (!confirm("Удалить этот рецепт из книги?")) return;
-            const response = await fetch(`http://localhost:5053/api/Fridge/saved/${id}`, { method: "DELETE" });
-            if (response.ok) document.getElementById(`recipe-${id}`).remove();
-        }
-
-        loadSavedRecipes();
-    </script>
-</body>
-</html>
+    // Запускаем загрузку
+    loadSavedRecipes();
+</script>

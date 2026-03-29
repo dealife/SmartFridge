@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SmartFridgeAPI.Models;
-using System.Collections.Generic;
+using SmartFridgeAPI.Models; // ОБЯЗАТЕЛЬНО: импорт папки с моделью Recipe
 
 namespace SmartFridgeAPI.Data
 {
@@ -8,7 +7,7 @@ namespace SmartFridgeAPI.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        // Это наша таблица в базе данных
-        public DbSet<SavedRecipe> SavedRecipes { get; set; }
+        // ВОТ ЭТА СТРОКА РЕШАЕТ ТВОЮ ОШИБКУ:
+        public DbSet<Recipe> Recipes { get; set; }
     }
 }

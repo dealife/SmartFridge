@@ -137,3 +137,4 @@ C:\Users\deali\OneDrive\Рабочий стол\SmartFridge.Api\obj\Debug\net8.0
 C:\Users\deali\OneDrive\Рабочий стол\SmartFridge.Api\obj\Debug\net8.0\SmartFridge.Api.pdb
 C:\Users\deali\OneDrive\Рабочий стол\SmartFridge.Api\obj\Debug\net8.0\SmartFridge.Api.genruntimeconfig.cache
 C:\Users\deali\OneDrive\Рабочий стол\SmartFridge.Api\obj\Debug\net8.0\ref\SmartFridge.Api.dll
+C:\Users\deali\OneDrive\Рабочий стол\SmartFridge.Api\obj\Debug\net8.0\SmartFridge.Api.sourcelink.json

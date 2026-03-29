@@ -1,76 +1,104 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SmartFridgeAPI.Data;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+ // Убедись, что этот Namespace совпадает с твоим AppDbContext
+using SmartFridgeAPI.Data;   // Чтобы видел AppDbContext
 using SmartFridgeAPI.Models;
-using SmartFridgeAPI.Services;
-
-namespace SmartFridgeAPI.Controllers
+namespace SmartFridge.Api.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class FridgeController : ControllerBase
     {
-        private readonly GeminiService _geminiService = new GeminiService();
-        private readonly AppDbContext _context;
+        private readonly IConfiguration _config;
+        private readonly HttpClient _httpClient;
+        private readonly AppDbContext _context; // 1. Добавили поле для базы данных
 
-        // Внедряем базу данных в контроллер
-        public FridgeController(AppDbContext context)
+        // 2. Добавили AppDbContext в конструктор
+        public FridgeController(IConfiguration config, HttpClient httpClient, AppDbContext context)
         {
+            _config = config;
+            _httpClient = httpClient;
             _context = context;
         }
 
-        [HttpPost("analyze")]
-        public async Task<IActionResult> AnalyzeFridge(IFormFile photo)
+        // ПОЛУЧЕНИЕ СОХРАНЕННЫХ РЕЦЕПТОВ
+        [HttpGet("saved")]
+        public async Task<IActionResult> GetSavedRecipes()
         {
-            if (photo == null || photo.Length == 0) return BadRequest("Загрузите фото!");
-
-            var result = await _geminiService.AnalyzeImage(photo);
-
-            if (result == null)
-            {
-                return Ok(new AnalyzeResponse
-                {
-                    Ingredients = new List<string> { "Яйца", "Бекон", "Сыр" },
-                    Recipes = new List<Recipe> {
-                        new Recipe {
-                            Title = "Завтрак разработчика",
-                            Description = "Обжарьте бекон, добавьте яйца.",
-                            MissingIngredients = new List<string> { "Зелень" }
-                        }
-                    }
-                });
-            }
-            return Ok(result);
+            var recipes = await _context.Recipes.OrderByDescending(r => r.Id).ToListAsync();
+            return Ok(recipes);
         }
 
-        // НОВЫЙ МЕТОД: Сохранение рецепта в базу
+        // СОХРАНЕНИЕ НОВОГО РЕЦЕПТА
         [HttpPost("save")]
-        public async Task<IActionResult> SaveRecipe([FromBody] SavedRecipe recipe)
+        public async Task<IActionResult> SaveRecipe([FromBody] Recipe recipe)
         {
             if (recipe == null) return BadRequest();
 
-            _context.SavedRecipes.Add(recipe);
+            recipe.SavedAt = DateTime.Now; // Добавляем дату сохранения
+            _context.Recipes.Add(recipe);
             await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Рецепт успешно сохранен в твою базу!" });
+            return Ok();
         }
-        
+
+        // УДАЛЕНИЕ РЕЦЕПТА
         [HttpDelete("saved/{id}")]
         public async Task<IActionResult> DeleteRecipe(int id)
         {
-            var recipe = await _context.SavedRecipes.FindAsync(id);
+            var recipe = await _context.Recipes.FindAsync(id);
             if (recipe == null) return NotFound();
 
-            _context.SavedRecipes.Remove(recipe);
+            _context.Recipes.Remove(recipe);
             await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Рецепт удален!" });
+            return Ok();
         }
-        // НОВЫЙ МЕТОД: Получение всех сохраненных рецептов
-        [HttpGet("saved")]
-        public IActionResult GetSavedRecipes()
+
+        // АНАЛИЗ ФОТО ЧЕРЕЗ GEMINI
+        [HttpPost("analyze")]
+        public async Task<IActionResult> Analyze(IFormFile photo)
         {
-            var recipes = _context.SavedRecipes.ToList();
-            return Ok(recipes);
+            if (photo == null || photo.Length == 0) return BadRequest("Фото не получено");
+
+            var apiKey = _config["GeminiApiKey"];
+            if (string.IsNullOrEmpty(apiKey)) return StatusCode(500, "API Ключ не найден");
+
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+
+            using var ms = new MemoryStream();
+            await photo.CopyToAsync(ms);
+            var base64Image = Convert.ToBase64String(ms.ToArray());
+
+            var requestBody = new
+            {
+                contents = new[] {
+                    new {
+                        parts = new object[] {
+                            new { text = "Ты — шеф-повар. Проанализируй фото холодильника. Перечисли продукты и предложи 2-3 рецепта. Ответ верни СТРОГО в формате JSON: { \"ingredients\": [\"продукт1\"], \"recipes\": [{ \"title\": \"название\", \"description\": \"описание\" }] }" },
+                            new { inline_data = new { mime_type = "image/jpeg", data = base64Image } }
+                        }
+                    }
+                }
+            };
+
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync(url, requestBody);
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+
+                using var doc = JsonDocument.Parse(jsonResponse);
+                var textResponse = doc.RootElement.GetProperty("candidates")[0]
+                                      .GetProperty("content")
+                                      .GetProperty("parts")[0]
+                                      .GetProperty("text").GetString();
+
+                var cleanJson = textResponse.Replace("```json", "").Replace("```", "").Trim();
+                return Content(cleanJson, "application/json");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Ошибка ИИ: {ex.Message}");
+            }
         }
     }
 }

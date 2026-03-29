@@ -1,14 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
 
-namespace SmartFridgeAPI.Models
+namespace SmartFridgeAPI.Models // Проверь, чтобы Namespace был как в проекте
 {
-    public class SavedRecipe
+    public class Recipe
     {
-        [Key] // Это уникальный номер (ID) рецепта в базе
         public int Id { get; set; }
-
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public DateTime SavedAt { get; set; } = DateTime.Now; // Дата сохранения
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public DateTime SavedAt { get; set; } = DateTime.Now;
     }
 }
