@@ -1,0 +1,7 @@
+[Bb]in/
+[Ob]j/
+*.user
+*.db
+*.db-shm
+*.db-wal
+.vs/

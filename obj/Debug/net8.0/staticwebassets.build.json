@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "hGkO8BobyY92JsJBNsIX6rdry23i53VjMT9VaZosfr8=",
+  "Source": "SmartFridge.Api",
+  "BasePath": "_content/SmartFridge.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

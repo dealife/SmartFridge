@@ -1,0 +1,60 @@
+[
+  {
+    "ContainingType": "SmartFridgeAPI.Controllers.FridgeController",
+    "Method": "AnalyzeFridge",
+    "RelativePath": "api/Fridge/analyze",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "photo",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SmartFridgeAPI.Controllers.FridgeController",
+    "Method": "SaveRecipe",
+    "RelativePath": "api/Fridge/save",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "recipe",
+        "Type": "SmartFridgeAPI.Models.SavedRecipe",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SmartFridgeAPI.Controllers.FridgeController",
+    "Method": "GetSavedRecipes",
+    "RelativePath": "api/Fridge/saved",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SmartFridgeAPI.Controllers.FridgeController",
+    "Method": "DeleteRecipe",
+    "RelativePath": "api/Fridge/saved/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
